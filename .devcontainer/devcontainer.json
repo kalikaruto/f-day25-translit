@@ -1,19 +1,9 @@
 {
   "name": "Custom Python Env",
-
   "build": {
     "dockerfile": "../Dockerfile",
     "context": ".."
   },
-
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
-      }
-    }
-  },
-
-  "postCreateCommand": "bash -lc 'pip install --upgrade pip && pip install -r ../requirements.txt'"
+  "postCreateCommand": "pip install -r requirements.txt"
 }
 

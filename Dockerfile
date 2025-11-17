@@ -7,16 +7,24 @@ RUN apt-get update && apt-get install -y \
     libffi-dev liblzma-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# ----------------------------
+# pyenv setup
+# ----------------------------
 USER vscode
 ENV PYENV_ROOT="/home/vscode/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
 
 RUN curl https://pyenv.run | bash
-RUN echo 'eval \"$(pyenv init -)\"' >> /home/vscode/.bashrc
-RUN echo 'eval \"$(pyenv virtualenv-init -)\"' >> /home/vscode/.bashrc
 
-RUN bash -lc "pyenv install 3.10.14"
-RUN bash -lc "pyenv global 3.10.14"
+# minimal and safe init (Codespaces friendly)
+RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc \
+ && echo 'export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"' >> ~/.bashrc \
+ && echo 'eval "$(pyenv init --path)"' >> ~/.bashrc
+
+# install single python version and strict pip version
+RUN bash -lc "pyenv install 3.10.13" \
+ && bash -lc "pyenv global 3.10.13" \
+ && bash -lc "pip install --upgrade pip==24.0"
 
 CMD ["bash"]
 
