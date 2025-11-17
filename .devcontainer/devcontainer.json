@@ -1,7 +1,12 @@
 {
   "name": "Custom Python Dev Env",
-  "build": { "dockerfile": "Dockerfile" },
-  "settings": { "terminal.integrated.defaultProfile.linux": "bash" },
-  "postCreateCommand": "echo 'Environment ready'"
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+
+  "postCreateCommand": "pip install --upgrade pip && pip install -r /tmp/requirements.txt"
 }
 
