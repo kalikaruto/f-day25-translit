@@ -1,2 +1,5 @@
 ai4bharat-transliteration
 fastapi
+uvicorn
+discord.py
+dotenv
