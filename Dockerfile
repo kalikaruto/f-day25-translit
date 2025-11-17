@@ -24,8 +24,6 @@ RUN bash -lc "pyenv global 3.10.14"
 
 # Install requirements
 COPY requirements.txt /tmp/requirements.txt
-RUN bash -lc "pip install --upgrade pip"
-RUN bash -lc "pip install -r /tmp/requirements.txt"
 
 CMD ["bash"]
 
