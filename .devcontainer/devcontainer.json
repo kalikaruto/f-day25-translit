@@ -3,7 +3,8 @@
 
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "options": "--no-cache"
   },
 
   "customizations": {
@@ -14,6 +15,6 @@
     }
   },
 
-  "postCreateCommand": "bash -lc 'pip install --upgrade pip && pip install -r ../requirements.txt'"
+  "postCreateCommand": "bash -lc 'pip install --upgrade pip && pip install -r requirements.txt'"
 }
 
