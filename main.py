@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 import torch, argparse
 import discord
-from discord.ext import commands
+from discord import app_commands
 from ai4bharat.transliteration import XlitEngine
 
 from utils import *
@@ -17,8 +17,15 @@ torch.serialization.add_safe_globals([argparse.Namespace])
 # Load .env
 load_dotenv()
 TOKEN = os.environ.get("DISCORD_TOKEN")
+GUILD_ID= os.environ.get("GUILD_ID")
+
 if not TOKEN:
     raise ValueError("DISCORD_TOKEN not set in .env")
+
+if not GUILD_ID:
+    raise ValueError("GUILD_ID not set in .env")
+
+guild = discord.Object(id=int(GUILD_ID))
 
 # --- FastAPI setup ---
 app = FastAPI()
@@ -40,53 +47,72 @@ async def list_languages():
     return {"supported": LANG_INFO}
 
 
-# --- Discord bot setup ---
+# --- Discord bot client setup ---
+class MyBot(discord.Client):
+    def __init__(self, *, intents: discord.Intents):
+        super().__init__(intents=intents)
+        self.tree = app_commands.CommandTree(self)
+
+    async def on_ready(self):
+        print(f'Logged on as {self.user}!')
+        
+        try:
+            guild = discord.Object(id=GUILD_ID) 
+            synced = await self.tree.sync(guild=guild)
+            
+            print(f'Synced {len(synced)} commands to guild {guild.id}')
+        except Exception as e:
+            print(f'Error syncing commands: {e}')
+
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix=":", intents=intents)
+intents.reactions = True
+
+client = MyBot(intents=intents)
 
 # per-user preferred language
 user_prefs = {}
 
-@bot.event
-async def on_ready():
-    print(f"Logged in as {bot.user}")
+@client.tree.command(name="ping", description="Ping the bot", guild=guild)
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("pong")
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send("pong")
+@client.tree.command(name="getlang", description="Get your current default language", guild=guild)
+async def getlang(interaction: discord.Interaction):
+    lang_enum = user_prefs.get(interaction.user.id, "hi")
+    await interaction.response.send_message(f"Your current default language is {lang_enum}")
 
-@bot.command()
-async def getlang(ctx):
-    """Get your current default language"""
-    lang = user_prefs.get(ctx.author.id, "hi")
-    await ctx.send(f"Your current default language is {lang}")
-
-@bot.command()
-async def setlang(ctx, lang: str):
+@client.tree.command(name="setlang", description="Set your language", guild=guild)
+@app_commands.describe(lang="Language code")
+async def setlang(interaction: discord.Interaction, lang: str):
+    print(f"Setting language for user {interaction.user.id} to {lang}")
     try:
         lang_enum = OutLang(lang)
     except ValueError:
-        await ctx.send(f"Unsupported language. Use one of: {[l.value for l in OutLang]}")
+        await interaction.response.send_message(
+            f"Unsupported language. Use one of: {[l.value for l in OutLang]}"
+        )
         return
-    user_prefs[ctx.author.id] = lang_enum
-    await ctx.send(f"Your language is now set to {lang_enum.value}")
+    
+    user_prefs[interaction.user.id] = lang_enum
+    await interaction.response.send_message(
+        f"Your language is now set to {lang_enum.value}"
+    )
 
-@bot.command()
-async def translit(ctx, *, text: str):
-    # Check if user has set a preferred language
-    lang_enum = user_prefs.get(ctx.author.id)
+@client.tree.command(name="translit", description="Transliterate text", guild=guild)
+@app_commands.describe(text="Text to transliterate")
+async def translit(interaction: discord.Interaction, text: str):
+    lang_enum = user_prefs.get(interaction.user.id)
     if not lang_enum:
-        await ctx.send(
+        await interaction.response.send_message(
             "You haven't set a default language yet. "
-            "Please use `!setlang <lang>` to set one. "
+            "Please use `/setlang <lang>` to set one. "
             "Use one of: " + ", ".join([l.value for l in OutLang])
         )
         return
 
-    # Proceed with transliteration
     result = await transliterate_sentence(Input(text=text, outlang=lang_enum))
-    await ctx.send(result["output"])
+    await interaction.response.send_message(result["output"])
 
 # --- Start FastAPI in background thread ---
 def start_api():
@@ -99,7 +125,7 @@ threading.Thread(target=start_api, daemon=True).start()
 nest_asyncio.apply()
 
 # --- Start Discord bot as a task in the running loop ---
-asyncio.get_event_loop().create_task(bot.start(TOKEN))
+asyncio.get_event_loop().create_task(client.run(TOKEN))
 
 # Keep the loop alive (Codespaces / Jupyter)
 asyncio.get_event_loop().run_forever()
