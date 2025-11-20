@@ -1,4 +1,3 @@
-# main.py
 import threading
 import os
 import nest_asyncio
@@ -72,6 +71,7 @@ client = MyBot(intents=intents)
 
 # per-user preferred language
 user_prefs = {}
+user_src_prefs = {}
 
 @client.tree.command(name="ping", description="Ping the bot", guild=guild)
 async def ping(interaction: discord.Interaction):
@@ -81,6 +81,11 @@ async def ping(interaction: discord.Interaction):
 async def getlang(interaction: discord.Interaction):
     lang_enum = user_prefs.get(interaction.user.id, "hi")
     await interaction.response.send_message(f"Your current default language is {lang_enum}")
+
+@client.tree.command(name="getsrc", description="Get your current source language", guild=guild)
+async def getsrc(interaction: discord.Interaction):
+    lang = user_src_prefs.get(interaction.user.id, "en")
+    await interaction.response.send_message(f"Your current source language is {lang}")
 
 @client.tree.command(name="setlang", description="Set your language", guild=guild)
 @app_commands.describe(lang="Language code")
@@ -99,6 +104,15 @@ async def setlang(interaction: discord.Interaction, lang: str):
         f"Your language is now set to {lang_enum.value}"
     )
 
+@client.tree.command(name="setsrc", description="Set your source language", guild=guild)
+@app_commands.describe(lang="Language code")
+async def setsrc(interaction: discord.Interaction, lang: str):
+    print(f"Setting source language for user {interaction.user.id} to {lang}")
+    user_src_prefs[interaction.user.id] = lang
+    await interaction.response.send_message(
+        f"Your source language is now set to {lang}"
+    )
+
 @client.tree.command(name="translit", description="Transliterate text", guild=guild)
 @app_commands.describe(text="Text to transliterate")
 async def translit(interaction: discord.Interaction, text: str):
@@ -113,6 +127,29 @@ async def translit(interaction: discord.Interaction, text: str):
 
     result = await transliterate_sentence(Input(text=text, outlang=lang_enum))
     await interaction.response.send_message(result["output"])
+
+@client.tree.command(name="help", description="Show all commands and supported languages", guild=guild)
+async def help_command(interaction: discord.Interaction):
+    commands = [
+        "/ping - Ping the bot",
+        "/getlang - Get your current default language",
+        "/getsrc - Get your current source language",
+        "/setlang <lang> - Set your default output language",
+        "/setsrc <lang> - Set your source language",
+        "/translit <text> - Transliterate text",
+        "/help - Show this help message"
+    ]
+    langs = "\n".join([
+        f"{lang['code']}: {lang['name']}"
+        for lang in LANG_INFO
+    ])
+    help_text = (
+        "**Available Commands:**\n" +
+        "\n".join(commands) +
+        "\n\n**Supported Languages:**\n" +
+        langs
+    )
+    await interaction.response.send_message(help_text)
 
 # --- Start FastAPI in background thread ---
 def start_api():
