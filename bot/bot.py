@@ -4,7 +4,7 @@ from discord import app_commands
 import aiohttp
 from dotenv import load_dotenv
 
-from utils import Lang, SrcLang
+from utils import *
 
 load_dotenv()
 TOKEN = os.environ.get("DISCORD_TOKEN")
@@ -77,6 +77,20 @@ async def warmup_backend(lang_code, src_lang):
 @client.tree.command(name="ping", description="Ping the bot", guild=guild)
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message("pong")
+
+@client.tree.command(name="list", description="List your current default transliteration settings", guild=guild)
+async def gl(interaction: discord.Interaction):
+    def format_table(items):
+        lines = ["Code\t\tLabel"]
+        for item in items:
+            lines.append(f"{item['code']}\t\t{item['label']}")
+        return "\n".join(lines)
+
+    lang_table = format_table(LANG_INFO)
+    src_table = format_table(SRC_SCRIPT_TYPES_INFO)
+    msg = f"**Supported Languages:**\n{lang_table}\n\n**Source Script Types:**\n{src_table} \n NOTE: Use the Code column for setting your language."
+    await interaction.response.send_message(msg)
+
 
 @client.tree.command(name="getlang", description="Get your current default language", guild=guild)
 async def gl(interaction: discord.Interaction):
