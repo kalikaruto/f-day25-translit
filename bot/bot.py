@@ -91,6 +91,22 @@ async def gl(interaction: discord.Interaction):
     msg = f"**Supported Languages:**\n{lang_table}\n\n**Source Script Types:**\n{src_table} \n NOTE: Use the Code column for setting your language."
     await interaction.response.send_message(msg)
 
+@client.tree.command(name="help", description="Show help for bot commands", guild=guild)
+async def help_cmd(interaction: discord.Interaction):
+    help_text = (
+        "**Bot Commands:**\n"
+        "/ping - Check if the bot is online\n"
+        "/list - List supported languages and source script types\n"
+        "/getlang - Show your current default transliteration settings\n"
+        "/setlang <src_script_type>-<lang_code> - Set your preferred transliteration (e.g., /setlang roman-hi)\n"
+        "/translit <text> - Transliterate text using your settings\n"
+        "/help - Show this help message\n"
+        "\n"
+        "Example usage:\n"
+        "`/setlang roman-hi`\n"
+        "`/translit namaste`\n"
+    )
+    await interaction.response.send_message(help_text)
 
 @client.tree.command(name="getlang", description="Get your current default language", guild=guild)
 async def gl(interaction: discord.Interaction):
