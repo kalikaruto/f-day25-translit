@@ -24,7 +24,7 @@ RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc \
 # install single python version and strict pip version
 RUN bash -lc "pyenv install 3.10.13" \
  && bash -lc "pyenv global 3.10.13" \
- && bash -lc "pip install --upgrade pip==24.0"
+ && bash -lc "pip install --upgrade pip==20.3.4"
 
 CMD ["bash"]
 
