@@ -88,7 +88,7 @@ async def gl(interaction: discord.Interaction):
 
     lang_table = format_table(LANG_INFO)
     src_table = format_table(SRC_SCRIPT_TYPES_INFO)
-    msg = f"**Supported Languages:**\n{lang_table}\n\n**Source Script Types:**\n{src_table} \n NOTE: Use the Code column for setting your language."
+    msg = f"NOTE: Use the Code column for setting your language. \n\n **Supported Languages:**\n{lang_table}\n\n**Source Script Types:**\n{src_table}"
     await interaction.response.send_message(msg)
 
 @client.tree.command(name="help", description="Show help for bot commands", guild=guild)
